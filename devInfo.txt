@@ -1,4 +1,6 @@
 
+npm install
+
 --- npm packages used ---
 
 npm i --save-dev jasmine
@@ -13,6 +15,9 @@ npm i eslint
 npm i typescript-collections
 npm i rbush
 npm i detect-collisions
+
+sudo npm i -g tsc
+sudo npm i -g ts-node
 
 
 
