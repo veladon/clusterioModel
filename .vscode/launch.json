@@ -1,0 +1,27 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "TypeScript",
+            "program": "${workspaceFolder}/model-out/ModelTest.js",
+            "preLaunchTask": "tsc: build - tsconfig.json",
+            "outFiles": [
+                "${workspaceFolder}/model-out/**/*.js"
+            ]
+        },
+        {
+            "name": "Debug Jasmine Tests",
+            "type": "node",
+            "request": "attach",
+            "port": 9239,
+            "protocol": "inspector",
+            "timeout": 30000,
+            "stopOnEntry": false
+          }
+    ]
+}

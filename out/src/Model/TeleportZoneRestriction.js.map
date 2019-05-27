@@ -1,0 +1,1 @@
+{"version":3,"file":"TeleportZoneRestriction.js","sourceRoot":"","sources":["../../../src/Model/TeleportZoneRestriction.ts"],"names":[],"mappings":";;AAEA,MAAa,uBAAuB;IAIhC,YAAY,kBAAgC,EAAE,uBAAqC;QAC/E,IAAI,CAAC,kBAAkB,GAAG,kBAAkB,CAAC;QAC7C,IAAI,CAAC,uBAAuB,GAAG,uBAAuB,CAAC;IAC3D,CAAC;CACJ;AARD,0DAQC"}

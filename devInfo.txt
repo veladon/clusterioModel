@@ -1,0 +1,36 @@
+
+--- npm packages used ---
+
+npm i --save-dev jasmine
+npm i --save-dev @types/jasmine
+npm i --save-dev ts-node
+npm i --save-dev @types/node
+npm i needle
+npm i --save-dev @types/needle
+
+npm i eslint
+
+npm i typescript-collections
+npm i rbush
+npm i detect-collisions
+
+
+
+--- recommended vscode plugins ---
+
+Jasmine Test Explorer
+vscode-icons
+
+
+--- setting up screen ---
+1. install screen from package manager
+2. sudo mkdir /run/screen
+3. sudo chmod 777 /run/screen
+
+--- screen cmds ---
+-- send ctrl-c to <session_name>
+screen -S <session_name> -X stuff ^C
+-- start master
+screen -dmS master -L -Logfile master.log node master.js
+-- start node
+screen -dmS <node_name> -L -Logfile <node_name>.log node client.js start <node_name>
