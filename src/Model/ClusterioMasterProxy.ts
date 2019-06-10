@@ -7,6 +7,7 @@ import { asyncForEach } from "./Helpers";
 import { TeleportZone } from "./TeleportZone";
 import fs = require('fs')
 import util = require('util')
+import { ServiceHostType } from "./ServiceHostType";
 
 /**
  * Contains all interactions between the cluster model, the
@@ -16,7 +17,7 @@ export class ClusterioMasterProxy implements IClusterioMasterProxy {
     private readonly _masterIP;
     private readonly _needleOptionsWithTokenAuthHeader;
 
-    public constructor(masterIP: string, masterPort: string, masterAuthToken: string) {
+    public constructor(masterIP: string, masterPort: string, masterAuthToken: string, serviceHostType: ServiceHostType) {
         this._masterIP = `${masterIP}:${masterPort}`;
         this._needleOptionsWithTokenAuthHeader = {
             headers: {
@@ -59,16 +60,38 @@ export class ClusterioMasterProxy implements IClusterioMasterProxy {
 
     public async CreateNodeInstanceOnLocalServer(node: NodeInstance) {
         console.log(`Creating instance ${node.Name}...`);
-        //let proc = child_process.spawn("pm2", ['start', '--name', node.Name, 'client.js', '--', 'start', node.Name]);
-        let nodeStarted = false;
         
+        await this.CreateNodeInstanceOnLocalServerUsingPm2(node);
+
+        console.log("Waiting for node to connect to cluster master...");
+        while (true) {
+            await this.sleep(1000);
+            //TODO: Use /api/getSlaveMeta/
+            let slaves = await this.GetSlaves();
+            let slave = slaves.find((slave, index, array) => slave.instanceName === node.Name);
+            if (slave != null) {
+                node.ClusterioWorldId = slave.id;
+                break;
+            }
+        }
+    }
+
+    private async CreateNodeInstanceOnLocalServerUsingPm2(node: NodeInstance) {
+        let proc = child_process.spawn("pm2", ['start', '--name', node.Name, 'client.js', '--', 'start', node.Name]);
+        proc.stdout.on('data', (data: string) => {  console.log(`stdout: ${data}`) });
+        proc.stderr.on('data', data => { console.log(`stderr: ${data}`) });
+        proc.on('error', error => { console.log(`error: ${error}`) });
+    }
+
+    private async CreateNodeInstanceOnLocalServerUsingScreen(node: NodeInstance) {
         // first call of client.js start for a new node creates map from HotPatch scenario then exits.
         let proc = child_process.spawn("screen", ['-dmS', node.Name, '-L', '-Logfile', node.Name + '.log', 'node', 'client.js', 'start', node.Name]);
         proc.stdout.on('data', (data: string) => {  console.log(`stdout: ${data}`) });
         proc.stderr.on('data', data => { console.log(`stderr: ${data}`) });
-        proc.on('error', error => { console.log(`error: ${error}`) })
+        proc.on('error', error => { console.log(`error: ${error}`) });
 
         console.log("Waiting for creation of new map...");
+        // create awaiter for fs.readFile
         const readFile = util.promisify(fs.readFile);
         while(true) {
             await this.sleep(1000);
@@ -83,18 +106,6 @@ export class ClusterioMasterProxy implements IClusterioMasterProxy {
         proc.stdout.on('data', data => { console.log(`stdout: ${data}`) });
         proc.stderr.on('data', data => { console.log(`stderr: ${data}`) });
         proc.on('error', error => { console.log(`error: ${error}`) })
-        
-        console.log("Waiting for node to connect to cluster master...");
-        while (true) {
-            await this.sleep(1000);
-            //TODO: Use /api/getSlaveMeta/
-            let slaves = await this.GetSlaves();
-            let slave = slaves.find((slave, index, array) => slave.instanceName === node.Name);
-            if (slave != null) {
-                node.ClusterioWorldId = slave.id;
-                break;
-            }
-        }
     }
 
     public async CreateTeleportZonesForANodeInstance(nodeInstance: NodeInstance) {

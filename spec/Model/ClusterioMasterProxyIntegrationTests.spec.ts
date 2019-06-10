@@ -5,6 +5,7 @@
 
 import { ClusterioMasterProxy } from "../../src/Model/ClusterioMasterProxy";
 import { IApiSlave } from "../../src/Model/IApiSlaves";
+import { ServiceHostType } from "../../src/Model/ServiceHostType";
 
 describe('RunRconCommand', () => {
     it('should print hello', async () => {
@@ -13,7 +14,8 @@ describe('RunRconCommand', () => {
             let proxy = new ClusterioMasterProxy(
                 config.masterIP,
                 config.masterPort,
-                config.masterAuthToken
+                config.masterAuthToken,
+                ServiceHostType.pm2
             );
             await proxy.RunRconCommand("-324437645", "/c game.print('hello')", "log test");
 
@@ -26,7 +28,8 @@ describe('GetSlaves', () => {
         let proxy = new ClusterioMasterProxy(
             config.masterIP,
             config.masterPort,
-            config.masterAuthToken
+            config.masterAuthToken,
+            ServiceHostType.pm2
         );
 
         let slaves = await proxy.GetSlaves();

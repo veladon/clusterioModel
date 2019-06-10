@@ -10,7 +10,7 @@ const util = require("util");
  * Clusterio master.js/client.js infrastructure and the operating system.
  */
 class ClusterioMasterProxy {
-    constructor(masterIP, masterPort, masterAuthToken) {
+    constructor(masterIP, masterPort, masterAuthToken, serviceHostType) {
         this._masterIP = `${masterIP}:${masterPort}`;
         this._needleOptionsWithTokenAuthHeader = {
             headers: {
@@ -49,14 +49,33 @@ class ClusterioMasterProxy {
     }
     async CreateNodeInstanceOnLocalServer(node) {
         console.log(`Creating instance ${node.Name}...`);
-        //let proc = child_process.spawn("pm2", ['start', '--name', node.Name, 'client.js', '--', 'start', node.Name]);
-        let nodeStarted = false;
+        await this.CreateNodeInstanceOnLocalServerUsingPm2(node);
+        console.log("Waiting for node to connect to cluster master...");
+        while (true) {
+            await this.sleep(1000);
+            //TODO: Use /api/getSlaveMeta/
+            let slaves = await this.GetSlaves();
+            let slave = slaves.find((slave, index, array) => slave.instanceName === node.Name);
+            if (slave != null) {
+                node.ClusterioWorldId = slave.id;
+                break;
+            }
+        }
+    }
+    async CreateNodeInstanceOnLocalServerUsingPm2(node) {
+        let proc = child_process.spawn("pm2", ['start', '--name', node.Name, 'client.js', '--', 'start', node.Name]);
+        proc.stdout.on('data', (data) => { console.log(`stdout: ${data}`); });
+        proc.stderr.on('data', data => { console.log(`stderr: ${data}`); });
+        proc.on('error', error => { console.log(`error: ${error}`); });
+    }
+    async CreateNodeInstanceOnLocalServerUsingScreen(node) {
         // first call of client.js start for a new node creates map from HotPatch scenario then exits.
         let proc = child_process.spawn("screen", ['-dmS', node.Name, '-L', '-Logfile', node.Name + '.log', 'node', 'client.js', 'start', node.Name]);
         proc.stdout.on('data', (data) => { console.log(`stdout: ${data}`); });
         proc.stderr.on('data', data => { console.log(`stderr: ${data}`); });
         proc.on('error', error => { console.log(`error: ${error}`); });
         console.log("Waiting for creation of new map...");
+        // create awaiter for fs.readFile
         const readFile = util.promisify(fs.readFile);
         while (true) {
             await this.sleep(1000);
@@ -70,16 +89,6 @@ class ClusterioMasterProxy {
         proc.stdout.on('data', data => { console.log(`stdout: ${data}`); });
         proc.stderr.on('data', data => { console.log(`stderr: ${data}`); });
         proc.on('error', error => { console.log(`error: ${error}`); });
-        console.log("Waiting for node to connect to cluster master...");
-        while (true) {
-            await this.sleep(1000);
-            let slaves = await this.GetSlaves();
-            let slave = slaves.find((slave, index, array) => slave.instanceName === node.Name);
-            if (slave != null) {
-                node.ClusterioWorldId = slave.id;
-                break;
-            }
-        }
     }
     async CreateTeleportZonesForANodeInstance(nodeInstance) {
         await Helpers_1.asyncForEach(nodeInstance.TeleportZones.values(), async (zone) => {

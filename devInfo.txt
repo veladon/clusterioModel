@@ -16,10 +16,11 @@ npm i typescript-collections
 npm i rbush
 npm i detect-collisions
 
-sudo npm i -g tsc
-sudo npm i -g ts-node
 
-
+to build in vscode, need following npm global packages:
+npm i -g typescript
+npm i -g tsc
+npm i -g ts-node
 
 --- recommended vscode plugins ---
 
