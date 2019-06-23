@@ -1,0 +1,8 @@
+[
+	{ "Name": "GridLockTest-Westeros", "Width": 2, "Height": 2, "TopLeftCoordinate": {"X":1,"Y":1} }, 
+	{ "Name": "GridLockTest-Novegrad", "Width": 1, "Height": 1, "TopLeftCoordinate": {"X":3,"Y":1} },
+	{ "Name": "GridLockTest-Tinseltown", "Width": 1, "Height": 1, "TopLeftCoordinate": {"X":1,"Y":3} },
+	{ "Name": "GridLockTest-Smallville", "Width": 1, "Height": 1, "TopLeftCoordinate": {"X":1,"Y":4} },
+	{ "Name": "GridLockTest-Timbuktu", "Width": 1, "Height": 1, "TopLeftCoordinate": {"X":1,"Y":5} },
+	{ "Name": "GridLockTest-Melee Island", "Width": 2, "Height": 1, "TopLeftCoordinate": {"X":1,"Y":6} }
+]

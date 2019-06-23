@@ -6,6 +6,7 @@ const TeleportZone_1 = require("./TeleportZone");
 const TeleportZoneDirection_1 = require("./TeleportZoneDirection");
 class Grid {
     constructor() {
+        this._nodeCoordinates = new typescript_collections_1.Dictionary();
         this._nodes = new typescript_collections_1.Dictionary();
         this._minX = 0;
         this._minY = 0;
@@ -21,13 +22,14 @@ class Grid {
      * @param nodeInstance
      */
     AddNodeToGrid(nodeInstance) {
+        this._nodes.setValue(nodeInstance.Name, nodeInstance);
         let topLeftCoordinate = nodeInstance.TopLeftCoordinate;
         let pointsToSave = new Array();
         // check all points that make up nodeInstance for existing nodes
         for (let x = topLeftCoordinate.X; x < topLeftCoordinate.X + nodeInstance.Width; x++) {
             for (let y = topLeftCoordinate.Y; y < topLeftCoordinate.Y + nodeInstance.Height; y++) {
                 let currentPoint = new Point_1.Point(x, y);
-                let existingNode = this._nodes.getValue(currentPoint);
+                let existingNode = this._nodeCoordinates.getValue(currentPoint);
                 if (existingNode != null) {
                     throw new Error("Cannot add node to grid - collision detected with node '" + existingNode.Name + "'");
                 }
@@ -36,7 +38,7 @@ class Grid {
         }
         // no existing nodes found to assign node to these points
         for (let i = 0; i < pointsToSave.length; i++) {
-            this._nodes.setValue(pointsToSave[i], nodeInstance);
+            this._nodeCoordinates.setValue(pointsToSave[i], nodeInstance);
         }
         //TODO: Refactor
         //#region Set up teleport zones
@@ -45,7 +47,7 @@ class Grid {
         let y = topLeftCoordinate.Y - 1;
         for (let x = topLeftCoordinate.X; x < topLeftCoordinate.X + nodeInstance.Width; x++) {
             let currentPoint = new Point_1.Point(x, y);
-            let existingNode = this._nodes.getValue(currentPoint);
+            let existingNode = this._nodeCoordinates.getValue(currentPoint);
             // found a node - set up teleport zone
             if (existingNode != null) {
                 // Create/Update teleport node in existing node to new node
@@ -73,7 +75,7 @@ class Grid {
         y = topLeftCoordinate.Y + nodeInstance.Height + 1;
         for (let x = topLeftCoordinate.X; x < topLeftCoordinate.X + nodeInstance.Width; x++) {
             let currentPoint = new Point_1.Point(x, y);
-            let existingNode = this._nodes.getValue(currentPoint);
+            let existingNode = this._nodeCoordinates.getValue(currentPoint);
             // found a node - set up teleport zone
             if (existingNode != null) {
                 // Create/Update teleport node in existing node to new node
@@ -101,7 +103,7 @@ class Grid {
         let x = topLeftCoordinate.X - 1;
         for (let y = topLeftCoordinate.Y; y < topLeftCoordinate.Y + nodeInstance.Height; y++) {
             let currentPoint = new Point_1.Point(x, y);
-            let existingNode = this._nodes.getValue(currentPoint);
+            let existingNode = this._nodeCoordinates.getValue(currentPoint);
             // found a node - set up teleport zone
             if (existingNode != null) {
                 // Create/Update teleport node in existing node to new node
@@ -129,7 +131,7 @@ class Grid {
         x = topLeftCoordinate.X + nodeInstance.Width + 1;
         for (let y = topLeftCoordinate.Y; y < topLeftCoordinate.Y + nodeInstance.Height; y++) {
             let currentPoint = new Point_1.Point(x, y);
-            let existingNode = this._nodes.getValue(currentPoint);
+            let existingNode = this._nodeCoordinates.getValue(currentPoint);
             // found a node - set up teleport zone
             if (existingNode != null) {
                 // Create/Update teleport node in existing node to new node
@@ -154,7 +156,7 @@ class Grid {
             }
         }
         //#endregion
-        this._nodes.setValue(topLeftCoordinate, nodeInstance);
+        this._nodeCoordinates.setValue(topLeftCoordinate, nodeInstance);
         this._minX = Math.min(this._minX, topLeftCoordinate.X);
         this._minY = Math.min(this._minY, topLeftCoordinate.Y);
         this._maxX = Math.max(this._maxX, topLeftCoordinate.X + nodeInstance.Width);

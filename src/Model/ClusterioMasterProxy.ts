@@ -8,14 +8,23 @@ import { TeleportZone } from "./TeleportZone";
 import fs = require('fs')
 import util = require('util')
 import { ServiceHostType } from "./ServiceHostType";
+import { GridToFactorioCoordinateSystemMultiplier } from "./Config";
+
+// create awaiters for fs
+const readFile = util.promisify(fs.readFile);
+const writeFile = util.promisify(fs.writeFile);
+const appendFile = util.promisify(fs.appendFile);
 
 /**
  * Contains all interactions between the cluster model, the
  * Clusterio master.js/client.js infrastructure and the operating system.
  */
 export class ClusterioMasterProxy implements IClusterioMasterProxy {
-    private readonly _masterIP;
-    private readonly _needleOptionsWithTokenAuthHeader;
+    private readonly _masterIP: string;
+    private readonly _needleOptionsWithTokenAuthHeader: object;
+
+    ScriptCommands: boolean = false;
+    ScriptCommandsFilePath: string;
 
     public constructor(masterIP: string, masterPort: string, masterAuthToken: string, serviceHostType: ServiceHostType) {
         this._masterIP = `${masterIP}:${masterPort}`;
@@ -26,10 +35,24 @@ export class ClusterioMasterProxy implements IClusterioMasterProxy {
         };
     }
 
+    /**
+     * Run this method to script the rcon commands to a text file rather than running them.
+     * @param outputPath output path for file to write commands to
+     */
+    public SetScriptCommands(outputPath: string) {
+        this.ScriptCommands = true;
+        this.ScriptCommandsFilePath = outputPath;
+    }
+
     public async RunRconCommand(instanceId: string, command: string, logDescription: string) {
-        console.log("Running command: " + logDescription);
-        let request = { instanceID: instanceId, command };
-        let response = await needle("post", this._masterIP + "/api/runCommand", request, this._needleOptionsWithTokenAuthHeader);
+        if(this.ScriptCommands) {
+            await appendFile(this.ScriptCommandsFilePath, `InstanceID: ${instanceId}, Command: ${command}`);
+        }
+        else {
+            console.log("Running command: " + logDescription);
+            let request = { instanceID: instanceId, command };
+            let response = await needle("post", this._masterIP + "/api/runCommand", request, this._needleOptionsWithTokenAuthHeader);
+        }        
     }
 
     public async GetSlaves(): Promise<IApiSlave[]> {
@@ -56,11 +79,15 @@ export class ClusterioMasterProxy implements IClusterioMasterProxy {
             await this.CreateTeleportRestrictionsForANodeInstance(node);
             await this.sleep(100);
         });
+        await asyncForEach(nodes, async (node: NodeInstance) => {
+            await this.SaveServer(node);
+            await this.sleep(100);
+        });
     }
 
     public async CreateNodeInstanceOnLocalServer(node: NodeInstance) {
-        console.log(`Creating instance ${node.Name}...`);
-        
+        console.log(`Creating instance ${node.Name}...`);        
+        await this.SyncMapSettingsFileWithNodeInstance(node);
         await this.CreateNodeInstanceOnLocalServerUsingPm2(node);
 
         console.log("Waiting for node to connect to cluster master...");
@@ -74,6 +101,17 @@ export class ClusterioMasterProxy implements IClusterioMasterProxy {
                 break;
             }
         }
+    }
+
+    private async SyncMapSettingsFileWithNodeInstance(node: NodeInstance) {     
+        let mapPath = './map-gen-settings.clusterio.json';
+        let mapSettings = JSON.parse(String(await readFile(mapPath)));
+        console.log(`Current map size: width=${mapSettings.width}, height=${mapSettings.height}`);
+        mapSettings.width = node.Width * GridToFactorioCoordinateSystemMultiplier;
+        mapSettings.height = node.Height * GridToFactorioCoordinateSystemMultiplier;
+        console.log(`Changing map size to width=${mapSettings.width}, height=${mapSettings.height}`);
+        await writeFile(mapPath, JSON.stringify(mapSettings));
+        console.log("map changed.");
     }
 
     private async CreateNodeInstanceOnLocalServerUsingPm2(node: NodeInstance) {
@@ -91,8 +129,6 @@ export class ClusterioMasterProxy implements IClusterioMasterProxy {
         proc.on('error', error => { console.log(`error: ${error}`) });
 
         console.log("Waiting for creation of new map...");
-        // create awaiter for fs.readFile
-        const readFile = util.promisify(fs.readFile);
         while(true) {
             await this.sleep(1000);
             let fileData = await readFile(node.Name + '.log');
@@ -126,6 +162,10 @@ export class ClusterioMasterProxy implements IClusterioMasterProxy {
                 `/c remote.call('trainTeleports','runCode',\"${cmd}\")`,
                 cmd);
         });
+    }
+
+    public async SaveServer(nodeInstance: NodeInstance) {
+        await this.RunRconCommand(nodeInstance.ClusterioWorldId, '/server-save','Saving Server');
     }
 
     sleep(ms: number) {

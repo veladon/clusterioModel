@@ -24,6 +24,10 @@ class ClusterManager {
             }
         }
     }
+    GenerateNodesFromJson(nodes) {
+        let nodeClassInstances = NodeInstance_1.NodeInstance.CreateFromJson(nodes);
+        nodeClassInstances.forEach(node => this.Grid.AddNodeToGrid(node));
+    }
     /**
      * Assigns all nodes that currently do not have a server assigned to the given server
      * @param server Server to assign all unassigned nodes to

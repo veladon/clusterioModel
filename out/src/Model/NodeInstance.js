@@ -24,6 +24,17 @@ class NodeInstance {
     get Key() {
         return this.Name;
     }
+    /**
+     * This method must be used to convert the node instance array from a plain old json object into class instances
+     * @param objectArray node instance object array created from a json file or string
+     */
+    static CreateFromJson(objectArray) {
+        let returnArray = new Array();
+        objectArray.forEach(o => {
+            returnArray.push(new NodeInstance(o.Name, new Point_1.Point(o.TopLeftCoordinate.X, o.TopLeftCoordinate.Y), o.Width, o.Height));
+        });
+        return returnArray;
+    }
 }
 exports.NodeInstance = NodeInstance;
 //# sourceMappingURL=NodeInstance.js.map

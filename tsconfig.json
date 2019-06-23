@@ -5,6 +5,10 @@
         "sourceMap": true,
         "outDir": "out",
         "moduleResolution": "node",
-        "allowJs": true
+        "allowJs": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "strictNullChecks": true,
+        "noImplicitAny": true,
     }
 }

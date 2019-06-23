@@ -32,9 +32,13 @@ class TeleportZone {
             .Add(new Point_1.Point(1, 1));
         // Factorio map is e.g. (-500,-500) to (500, 500) for a 1000x1000 node.
         // We therefore need to offset our co-ordinates so that (0,0) is the center and not (width/2, height/2)
+        // We do this by offsetting co-ords by 1/2 size of the map
         let m = Config.GridToFactorioCoordinateSystemMultiplier;
-        let factorioTeleportZoneTopLeft = new Point_1.Point(topLeftRelativeCoordinate.X * m - m / 2, topLeftRelativeCoordinate.Y * m - m / 2);
-        let factorioTeleportZoneBottomRight = new Point_1.Point(bottomRightRelativeCoordinate.X * m - m / 2, bottomRightRelativeCoordinate.Y * m - m / 2);
+        let widthOffset = this.ParentNode.Width * m / 2;
+        let heightOffset = this.ParentNode.Height * m / 2;
+        // Get co-ords of teleport zone in Factorio co-ords, not yet restricted by zone width (done below)
+        let factorioTeleportZoneTopLeft = new Point_1.Point(topLeftRelativeCoordinate.X * m - widthOffset, topLeftRelativeCoordinate.Y * m - heightOffset);
+        let factorioTeleportZoneBottomRight = new Point_1.Point(bottomRightRelativeCoordinate.X * m - widthOffset, bottomRightRelativeCoordinate.Y * m - heightOffset);
         let zoneWidth = factorioTeleportZoneBottomRight.X - factorioTeleportZoneTopLeft.X;
         let zoneHeight = factorioTeleportZoneBottomRight.Y - factorioTeleportZoneTopLeft.Y;
         let tl = factorioTeleportZoneTopLeft;
@@ -57,6 +61,9 @@ class TeleportZone {
      */
     GenerateZoneRestriction() {
         let targetZone = this.TargetNode.TeleportZones.getValue(this.ParentNode.Key);
+        if (targetZone == undefined) {
+            throw new Error("Cannot find targetZone");
+        }
         return [this.Index + 1, this.TargetNode.Name, targetZone.Name];
     }
 }

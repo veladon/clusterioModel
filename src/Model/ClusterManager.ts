@@ -2,6 +2,7 @@ import { NodeInstance } from './NodeInstance'
 import { Server } from './Server'
 import { Point } from './Point';
 import { Grid } from './Grid';
+import { JsonConvert } from 'json2typescript';
 
 /**
  * Manages all nodes within the cluster
@@ -24,6 +25,11 @@ export class ClusterManager {
                 this.Grid.AddNodeToGrid(newNode);
             }
         }
+    }
+
+    public GenerateNodesFromJson(nodes: NodeInstance[]) {
+        let nodeClassInstances = NodeInstance.CreateFromJson(nodes);
+        nodeClassInstances.forEach(node => this.Grid.AddNodeToGrid(node));
     }
 
     /**
